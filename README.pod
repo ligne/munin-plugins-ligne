@@ -1,2 +1,11 @@
-Tomorrow, I shall commit some Munin plugins I've written.  http://munin.projects.linpro.no/ for details.
+=head1 INTRODUCTION
+
+Tomorrow, I shall commit some Munin plugins I've written.  See the
+project L<http://munin.projects.linpro.no/> for details of what
+that might entail.
+
+Structure is as used in the Munin source tree (browsable here:
+L<http://munin-monitoring.org/browser/trunk/plugins>).  Those in
+C<node.d/> are platform-independent, those in C<node.d.linux/> most
+likely require Linux-specific functionality.
 
