@@ -1,0 +1,316 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+nagiostats - Monitor performance and behaviour of a Nagios instance
+
+=head1 CONFIGURATION
+
+env.nagiostats - name/path of nagiostats(1) binary.  May be called nagios3stats
+in certain distributions
+
+=head1 AUTHOR
+
+Copyright (C) 2010 Matthew Boyle
+
+=head1 LICENCE
+
+GPLv2 or (at your option) any later version.
+
+=cut
+
+#%# family=auto
+#%# capabilities=autoconf suggest
+
+use strict;
+use warnings;
+
+my $nagiostat = $ENV{nagiostats} || 'nagiostats';
+
+my @variables = (qw/
+PROGRUNTIMETT STATUSFILEAGETT TOTCMDBUF USEDCMDBUF NUMSERVICES NUMHOSTS
+NUMSVCOK NUMSVCWARN NUMSVCUNKN NUMSVCCRIT NUMSVCPROB NUMSVCCHECKED
+NUMSVCSCHEDULED NUMSVCFLAPPING NUMSVCDOWNTIME NUMHSTUP NUMHSTDOWN NUMHSTUNR
+NUMHSTPROB NUMHSTCHECKED NUMHSTSCHEDULED NUMHSTFLAPPING NUMHSTDOWNTIME
+NUMHSTACTCHK5M NUMHSTPSVCHK5M NUMSVCACTCHK5M NUMSVCPSVCHK5M MINACTHSTLAT
+MAXACTHSTLAT AVGACTHSTLAT MINPSVHSTLAT MAXPSVHSTLAT AVGPSVHSTLAT MINACTSVCLAT
+MAXACTSVCLAT AVGACTSVCLAT MINPSVSVCLAT MAXPSVSVCLAT AVGPSVSVCLAT MINACTHSTEXT
+MAXACTHSTEXT AVGACTHSTEXT MINACTSVCEXT MAXACTSVCEXT AVGACTSVCEXT
+NUMACTHSTCHECKS5M NUMOACTHSTCHECKS5M NUMCACHEDHSTCHECKS5M NUMSACTHSTCHECKS5M
+NUMPARHSTCHECKS5M NUMSERHSTCHECKS5M NUMPSVHSTCHECKS5M NUMACTSVCCHECKS5M
+NUMOACTSVCCHECKS5M NUMCACHEDSVCCHECKS5M NUMSACTSVCCHECKS5M NUMPSVSVCCHECKS5M
+NUMEXTCMDS5M
+/);
+
+my $variables = join ',', @variables;
+
+my %config = (
+    uptime => <<"EOC",
+graph_title Nagios uptime
+uptime.label Uptime (s)
+EOC
+
+    statusfileage => <<"EOC",
+graph_title Age of status file
+statusfileage.label Age (s)
+EOC
+
+    cmdbuf => <<"EOC",
+graph_title Command buffer usage
+graph_scale no
+totcmdbuf.label Total
+totcmdbuf.draw AREA
+usedcmdbuf.label Used
+EOC
+
+    extcmds => <<"EOC",
+graph_title External commands
+graph_vlabel Number
+graph_scale no
+numextcmds.label Number
+numextcmds.info The number of external commands run in the preceeding 5 minutes
+EOC
+
+    hoststates => <<"EOC",
+graph_title Host states
+graph_vlabel Number
+graph_args --base 1000 -l 0
+numhstunrn.label UNREACHABLE
+numhstunrn.draw AREA
+numhstunrn.colour cccccc
+numhstdown.label DOWN
+numhstdown.draw STACK
+numhstdown.colour f83838
+numhstup.label UP
+numhstup.draw STACK
+numhstup.colour 33ff00
+EOC
+
+    servicestates => <<"EOC",
+graph_title Service states
+graph_vlabel Number
+graph_args --base 1000 -l 0
+numsvcunkn.label UNKNOWN
+numsvcunkn.draw AREA
+numsvcunkn.colour cccccc
+numsvccrit.label CRITICAL
+numsvccrit.draw STACK
+numsvccrit.colour f83838
+numsvcwarn.label WARNING
+numsvcwarn.draw STACK
+numsvcwarn.colour ffff00
+numsvcok.label OK
+numsvcok.draw STACK
+numsvcok.colour 33ff00
+EOC
+
+    acthstlat => <<"EOC",
+graph_title Host check latency
+graph_vlabel Latency (ms)
+graph_args --base 1000 -l 0
+min.label Minimum
+max.label Maximum
+avg.label Average
+EOC
+
+    psvhstlat  => <<"EOC",
+graph_title Passive host check latency
+graph_vlabel Latency (ms)
+graph_args --base 1000 -l 0
+min.label Minimum
+max.label Maximum
+avg.label Average
+EOC
+
+    actsvclat  => <<"EOC",
+graph_title Service check latency
+graph_vlabel Latency (ms)
+graph_args --base 1000 -l 0
+min.label Minimum
+max.label Maximum
+avg.label Average
+EOC
+
+    psvsvclat => <<"EOC",
+graph_title Passive service check latency
+graph_vlabel Latency (ms)
+graph_args --base 1000 -l 0
+min.label Minimum
+max.label Maximum
+avg.label Average
+EOC
+
+    acthstext => <<"EOC",
+graph_title Host check execution time
+graph_vlabel Time (ms)
+graph_args --base 1000 -l 0
+min.label Minimum
+max.label Maximum
+avg.label Average
+EOC
+
+    actsvcext => <<"EOC",
+graph_title Service check execution time
+graph_vlabel Time (ms)
+graph_args --base 1000 -l 0
+min.label Minimum
+max.label Maximum
+avg.label Average
+EOC
+
+    flapping => <<"EOC",
+graph_title Flapping services and hosts
+graph_vlabel Number
+hosts.label Hosts
+services.label Services
+EOC
+
+    downtime => <<"EOC",
+graph_title Services and hosts in downtime
+graph_vlabel Number
+hosts.label Hosts
+services.label Services
+EOC
+
+    scheduledchecks => <<"EOC",
+graph_title Scheduled host and service checks
+graph_args --base 1000 -l 0
+graph_vlabel Number
+hosts.label Hosts
+services.label Services
+EOC
+
+);
+
+# NUMHSTACTCHK5M       number of hosts actively checked in last 5 minutes.
+# NUMHSTPSVCHK5M       number of hosts passively checked in last 5 minutes.
+# NUMSVCACTCHK5M       number of services actively checked in last 5 minutes.
+# NUMSVCPSVCHK5M       number of services passively checked in last 5 minutes.
+#
+# NUMACTHSTCHECKS5M    number of total active host checks occuring in last 5 minutes.
+# NUMOACTHSTCHECKS5M   number of on-demand active host checks occuring in last 5 minutes.
+# NUMCACHEDHSTCHECKS5M number of cached host checks occuring in last 5 minutes.
+# NUMSACTHSTCHECKS5M   number of scheduled active host checks occuring in last 5 minutes.
+# NUMPARHSTCHECKS5M    number of parallel host checks occuring in last 5 minutes.
+# NUMSERHSTCHECKS5M    number of serial host checks occuring in last 5 minutes.
+# NUMPSVHSTCHECKS5M    number of passive host checks occuring in last 5 minutes.
+#
+# NUMACTSVCCHECKS5M    number of total active service checks occuring in last 5 minutes.
+# NUMOACTSVCCHECKS5M   number of on-demand active service checks occuring in last 5 minutes.
+# NUMCACHEDSVCCHECKS5M number of cached service checks occuring in last 5 minutes.
+# NUMSACTSVCCHECKS5M   number of scheduled active service checks occuring in last 5 minutes.
+# NUMPSVSVCCHECKS5M    number of passive service checks occuring in last 5 minutes.
+
+if ($ARGV[0] and $ARGV[0] eq 'autoconf') {
+    system("$nagiostat -h 1>/dev/null 2>/dev/null") == 0
+        ? print "yes\n"
+        : print "no ($nagiostat not executable)\n";
+    exit 0;
+}
+
+if ($ARGV[0] and $ARGV[0] eq 'suggest') {
+    print join("\n", keys %config), "\n";
+    exit 0;
+}
+
+my $flavour = (split('_', $0))[-1];
+exit 1 unless $flavour and exists $config{$flavour};
+
+if ($ARGV[0] and $ARGV[0] eq 'config') {
+    print $config{$flavour};
+    print "graph_category nagios\n";
+
+    exit 0 unless $ENV{MUNIN_CAP_DIRTYCONFIG};
+}
+
+open(my $RESULTS, "$nagiostat -m -d $variables |") or die "Failed to run '$nagiostat': $!\n";
+
+my %values;
+chomp(@values{@variables} = <$RESULTS>);
+
+my %result = (
+    uptime => <<"EOR",
+uptime.value $values{PROGRUNTIMETT}
+EOR
+
+    statusfileage => <<"EOR",
+statusfileage.value $values{STATUSFILEAGETT}
+EOR
+
+    cmdbuf => <<"EOR",
+usedcmdbuf.value $values{USEDCMDBUF}
+totcmdbuf.value $values{TOTCMDBUF}
+EOR
+
+    hoststates => <<"EOR",
+numhstup.value $values{NUMHSTUP}
+numhstdown.value $values{NUMHSTDOWN}
+numhstunrn.value $values{NUMHSTUNR}
+EOR
+
+    servicestates => <<"EOR",
+numsvcok.value $values{NUMSVCOK}
+numsvcwarn.value $values{NUMSVCWARN}
+numsvccrit.value $values{NUMSVCCRIT}
+numsvcunkn.value $values{NUMSVCUNKN}
+EOR
+
+    acthstlat => <<"EOR",
+min.value $values{MINACTHSTLAT}
+max.value $values{MAXACTHSTLAT}
+avg.value $values{AVGACTHSTLAT}
+EOR
+
+    psvhstlat => <<"EOR",
+min.value $values{MINPSVHSTLAT}
+max.value $values{MAXPSVHSTLAT}
+avg.value $values{AVGPSVHSTLAT}
+EOR
+
+    actsvclat => <<"EOR",
+min.value $values{MINACTSVCLAT}
+max.value $values{MAXACTSVCLAT}
+avg.value $values{AVGACTSVCLAT}
+EOR
+
+    psvsvclat => <<"EOR",
+min.value $values{MINPSVSVCLAT}
+max.value $values{MAXPSVSVCLAT}
+avg.value $values{AVGPSVSVCLAT}
+EOR
+
+    acthstext => <<"EOR",
+min.value $values{MINACTHSTEXT}
+max.value $values{MAXACTHSTEXT}
+avg.value $values{AVGACTHSTEXT}
+EOR
+
+    actsvcext => <<"EOR",
+min.value $values{MINACTSVCEXT}
+max.value $values{MAXACTSVCEXT}
+avg.value $values{AVGACTSVCEXT}
+EOR
+
+    flapping => <<"EOR",
+hosts.value $values{NUMHSTFLAPPING}
+services.value $values{NUMSVCFLAPPING}
+EOR
+
+    downtime => <<"EOR",
+hosts.value $values{NUMHSTDOWNTIME}
+services.value $values{NUMSVCDOWNTIME}
+EOR
+
+    extcmds => <<"EOR",
+numextcmds.value $values{NUMEXTCMDS5M}
+EOR
+
+    scheduledchecks => <<"EOR",
+hosts.value $values{NUMHSTSCHEDULED}
+services.value $values{NUMSVCSCHEDULED}
+EOR
+);
+
+print $result{$flavour};
+
+# vim: ts=4 : sw=4 : et

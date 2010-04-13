@@ -1,11 +1,37 @@
 =head1 INTRODUCTION
 
-Tomorrow, I shall commit some Munin plugins I've written.  See the
-project L<http://munin.projects.linpro.no/> for details of what
-that might entail.
+Some Munin plugins I've written.  See the project
+L<http://munin.projects.linpro.no/> for details of what
+that might mean.
 
 Structure is as used in the Munin source tree (browsable here:
 L<http://munin-monitoring.org/browser/trunk/plugins>).  Those in
 C<node.d/> are platform-independent, those in C<node.d.linux/> most
 likely require Linux-specific functionality.
+
+=head1 WARNING
+
+Most of these are still works in progress, so unless explicitly noted
+otherwise, breaking changes may occur at any time.  That may mean losing graph
+history, or having to re-configure the node to avoid gaps.
+
+=head1 PLUGINS
+
+This is just a brief overview.  The plugins should (eventually) contain more
+detailed documentation in POD format.
+
+=over 4
+
+=item C<node.d/nagiostats_>
+
+Statistics relating to Nagios performance.
+L<http://nagios.sourceforge.net/docs/3_0/nagiostats.html>
+
+=back
+
+
+=head1 INSTALLING
+
+Wherever possible, they should work cleanly with C<munin-node-configure>.  See
+individual plugins for specific caveats.
 
