@@ -1,0 +1,94 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Munin::Plugin;
+
+#%# family=auto
+#%# capabilities=autoconf
+
+# desc : Small description about the idle state (string)
+# latency : Latency to exit out of this idle state (in microseconds)
+# name : Name of the idle state (string)
+# power : Power consumed while in this idle state (in milliwatts)
+# time : Total time spent in this idle state (in microseconds)
+# usage : Number of times this state was entered (count)
+
+need_multigraph;
+
+# autoconf
+if ($ARGV[0] and $ARGV[0] eq 'autoconf') {
+    glob "/sys/devices/system/cpu/cpu*/cpuidle/"
+        ?  print "yes\n"
+        :  print "no (/sys/devices/system/cpu/cpu*/cpuidle/ missing)\n";
+    exit 0;
+}
+
+# get the data.
+my @idle_info;
+
+{
+    local @ARGV = glob "/sys/devices/system/cpu/cpu*/cpuidle/state*/*";
+    while (<>) {
+        my ($cpu, $state, $field) = ($ARGV =~ m{/sys/devices/system/cpu/cpu(\d+)/cpuidle/state(\d+)/(\w+)});
+        warn "processing '$field' for state $state on cpu $cpu\n"
+            if $Munin::Plugin::DEBUG;
+        chomp($idle_info[$cpu][$state]{$field} = $_);
+    }
+}
+
+
+# config
+if ($ARGV[0] and $ARGV[0] eq 'config') {
+    my $cpu_index = 0;
+    foreach my $cpu (@idle_info) {
+        print "multigraph cpuidle_time_cpu$cpu_index\n";
+        print "graph_title Time spent in idle states by CPU $cpu_index\n";
+        print "graph_vlabel microseconds\n";
+        print "graph_args --logarithmic\n";
+        print "graph_category System\n";
+        print "graph_info Total time CPU $cpu_index spent in each idle state\n";
+        foreach my $state (@$cpu) {
+            print "$state->{name}.label $state->{name}\n";
+            print "$state->{name}.type  COUNTER\n";
+            print "$state->{name}.min   0\n";
+            print "$state->{name}.draw  AREASTACK\n";
+        }
+
+        print "multigraph cpuidle_usage_cpu$cpu_index\n";
+        print "graph_title Usage of idle states by CPU $cpu_index\n";
+        print "graph_vlabel \${graph_period}\n";
+        print "graph_args --logarithmic\n";
+        print "graph_category System\n";
+        print "graph_info Number of times CPU $cpu_index entered each state\n";
+        foreach my $state (@$cpu) {
+            print "$state->{name}.label $state->{name}\n";
+            print "$state->{name}.type  COUNTER\n";
+            print "$state->{name}.min   0\n";
+            print "$state->{name}.draw  LINESTACK1\n";
+        }
+
+        $cpu_index++;
+    }
+
+    exit 0;
+}
+
+# fetch
+my $cpu_index = 0;
+foreach my $cpu (@idle_info) {
+    print "multigraph cpuidle_time_cpu$cpu_index\n";
+    foreach my $state (@$cpu) {
+        print "$state->{name}.value $state->{time}\n";
+    }
+
+    print "multigraph cpuidle_usage_cpu$cpu_index\n";
+    foreach my $state (@$cpu) {
+        print "$state->{name}.value $state->{usage}\n";
+    }
+
+    $cpu_index++;
+}
+
+# vim: sw=4 : ts=4 : et
