@@ -19,7 +19,7 @@ following environment variables are available if it doesn't:
 =item C<env.nagiostats>
 
 The name or path of the C<nagiostats> binary.  Certain distributions (such as
-Debian) call it C<nagios2stats> or C<nagios3stats>.
+Debian) may call it something else, such as C<nagios2stats> or C<nagios3stats>.
 
 =back
 
@@ -33,12 +33,12 @@ http://nagios.sourceforge.net/docs/3_0/mrtggraphs.html
 
 =head1 MAGIC MARKERS
 
-  #%# family=auto
-  #%# capabilities=autoconf suggest
+#%# family=auto
+#%# capabilities=autoconf suggest
 
 =head1 BUGS
 
-None known.
+None known.  Tested on Debian Lenny.
 
 =head1 AUTHOR
 
@@ -79,6 +79,7 @@ graph_title Nagios uptime
 uptime.label Uptime (s)
 EOC
 
+    # FIXME: not terribly useful.
     statusfileage => <<"EOC",
 graph_title Age of status file
 statusfileage.label Age (s)
@@ -251,6 +252,7 @@ if ($ARGV[0] and $ARGV[0] eq 'config') {
 
     exit 0 unless $ENV{MUNIN_CAP_DIRTYCONFIG};
 }
+
 
 open(my $RESULTS, "$nagiostat -m -d $variables |")
     or die "Failed to run '$nagiostat': $!\n";
