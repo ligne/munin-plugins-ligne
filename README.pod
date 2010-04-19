@@ -17,8 +17,8 @@ history, or having to re-configure the node to avoid gaps.
 
 =head1 PLUGINS
 
-This is just a brief overview.  The plugins should (eventually) contain more
-detailed documentation in POD format.
+This is just a brief overview of available plugins.  The plugins should
+(eventually) contain more detailed documentation in POD format.
 
 =over 4
 
@@ -27,8 +27,14 @@ detailed documentation in POD format.
 Statistics relating to Nagios performance.
 L<http://nagios.sourceforge.net/docs/3_0/nagiostats.html>
 
-=back
 
+=item C<node.d.linux/cpuidle> (requires multigraph)
+
+Monitor usage of CPU idle states.  Still very raw, both in terms of the code as
+well as the usefulness of the graphs.
+
+
+=back
 
 =head1 INSTALLING
 
