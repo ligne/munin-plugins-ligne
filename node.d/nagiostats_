@@ -30,6 +30,7 @@ FIXME
 
 http://nagios.sourceforge.net/docs/3_0/nagiostats.html
 http://nagios.sourceforge.net/docs/3_0/mrtggraphs.html
+http://nagios.sourceforge.net/docs/3_0/tuning.html
 
 =head1 MAGIC MARKERS
 
@@ -77,6 +78,7 @@ my %config = (
     uptime => <<"EOC",
 graph_title Nagios uptime
 uptime.label Uptime (s)
+uptime.info The time since Nagios was last restarted
 EOC
 
     # FIXME: not terribly useful.
@@ -88,15 +90,19 @@ EOC
     cmdbuf => <<"EOC",
 graph_title Command buffer usage
 graph_scale no
+graph_info http://nagios.sourceforge.net/docs/3_0/extcommands.html
 totcmdbuf.label Total
 totcmdbuf.draw AREA
+totcmdbuf.info  Total number of external command buffer slots available.
 usedcmdbuf.label Used
+usedcmdbuf.info The number of external command buffer slots currently in use
 EOC
 
     extcmds => <<"EOC",
 graph_title External commands
 graph_vlabel Number
 graph_scale no
+graph_info http://nagios.sourceforge.net/docs/3_0/extcommands.html
 numextcmds.label Number
 numextcmds.info The number of external commands run in the preceeding 5 minutes
 EOC
@@ -105,39 +111,49 @@ EOC
 graph_title Host states
 graph_vlabel Number
 graph_args --base 1000 -l 0
+graph_info 
 numhstunrn.label UNREACHABLE
 numhstunrn.draw AREA
 numhstunrn.colour cccccc
+numhstunrn.info Number of hosts in the UNREACHABLE state (ie. behind a DOWN host).  http://nagios.sourceforge.net/docs/3_0/networkreachability.html
 numhstdown.label DOWN
 numhstdown.draw STACK
 numhstdown.colour f83838
+numhstdown.info Number of hosts in the DOWN state
 numhstup.label UP
 numhstup.draw STACK
 numhstup.colour 33ff00
+numhstup.info Number of hosts in the UP state
 EOC
 
     servicestates => <<"EOC",
 graph_title Service states
 graph_vlabel Number
 graph_args --base 1000 -l 0
+graph_info 
 numsvcunkn.label UNKNOWN
 numsvcunkn.draw AREA
 numsvcunkn.colour cccccc
+numsvcunkn.info Number of services in the UNKNOWN state
 numsvccrit.label CRITICAL
 numsvccrit.draw STACK
 numsvccrit.colour f83838
+numsvccrit.info Number of services in the CRITICAL state
 numsvcwarn.label WARNING
 numsvcwarn.draw STACK
 numsvcwarn.colour ffff00
+numsvcwarn.info Number of services in the WARNING state
 numsvcok.label OK
 numsvcok.draw STACK
 numsvcok.colour 33ff00
+numsvcok.info Number of services in the OK state
 EOC
 
     acthstlat => <<"EOC",
 graph_title Host check latency
 graph_vlabel Latency (ms)
 graph_args --base 1000 -l 0
+graph_info http://nagios.sourceforge.net/docs/3_0/activechecks.html
 min.label Minimum
 max.label Maximum
 avg.label Average
@@ -147,6 +163,7 @@ EOC
 graph_title Passive host check latency
 graph_vlabel Latency (ms)
 graph_args --base 1000 -l 0
+graph_info http://nagios.sourceforge.net/docs/3_0/passivechecks.html
 min.label Minimum
 max.label Maximum
 avg.label Average
@@ -156,6 +173,7 @@ EOC
 graph_title Service check latency
 graph_vlabel Latency (ms)
 graph_args --base 1000 -l 0
+graph_info http://nagios.sourceforge.net/docs/3_0/activechecks.html
 min.label Minimum
 max.label Maximum
 avg.label Average
@@ -165,6 +183,7 @@ EOC
 graph_title Passive service check latency
 graph_vlabel Latency (ms)
 graph_args --base 1000 -l 0
+graph_info http://nagios.sourceforge.net/docs/3_0/passivechecks.html
 min.label Minimum
 max.label Maximum
 avg.label Average
@@ -174,6 +193,7 @@ EOC
 graph_title Host check execution time
 graph_vlabel Time (ms)
 graph_args --base 1000 -l 0
+graph_info http://nagios.sourceforge.net/docs/3_0/activechecks.html
 min.label Minimum
 max.label Maximum
 avg.label Average
@@ -183,6 +203,7 @@ EOC
 graph_title Service check execution time
 graph_vlabel Time (ms)
 graph_args --base 1000 -l 0
+graph_info http://nagios.sourceforge.net/docs/3_0/activechecks.html
 min.label Minimum
 max.label Maximum
 avg.label Average
@@ -191,13 +212,15 @@ EOC
     flapping => <<"EOC",
 graph_title Flapping services and hosts
 graph_vlabel Number
+graph_info http://nagios.sourceforge.net/docs/3_0/flapping.html
 hosts.label Hosts
 services.label Services
 EOC
 
     downtime => <<"EOC",
-graph_title Services and hosts in downtime
+graph_title Services and hosts in scheduled downtime
 graph_vlabel Number
+graph_info http://nagios.sourceforge.net/docs/3_0/downtime.html
 hosts.label Hosts
 services.label Services
 EOC
