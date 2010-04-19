@@ -24,8 +24,7 @@ This is just a brief overview of available plugins.  The plugins should
 
 =item C<node.d/nagiostats_>
 
-Statistics relating to Nagios performance.
-L<http://nagios.sourceforge.net/docs/3_0/nagiostats.html>
+Statistics relating to Nagios performance.  Mostly works, should be fairly stable.
 
 
 =item C<node.d.linux/cpuidle> (requires multigraph)
