@@ -81,12 +81,6 @@ uptime.label Uptime (s)
 uptime.info The time since Nagios was last restarted
 EOC
 
-    # FIXME: not terribly useful.  just check that it's fresh?
-    statusfileage => <<"EOC",
-graph_title Age of status file
-statusfileage.label Age (s)
-EOC
-
     cmdbuf => <<"EOC",
 graph_title Command buffer usage
 graph_scale no
@@ -284,13 +278,14 @@ chomp(@values{@variables} = <$RESULTS>);
 
 close $RESULTS or die "Error running '$nagiostat': $!\n";
 
+
+die "Status file is too old ($values{STATUSFILEAGETT} s).  Maybe Nagios has crashed?\n"
+    if ($values{STATUSFILEAGETT} > 60);
+
+
 my %result = (
     uptime => <<"EOR",
 uptime.value $values{PROGRUNTIMETT}
-EOR
-
-    statusfileage => <<"EOR",
-statusfileage.value $values{STATUSFILEAGETT}
 EOR
 
     cmdbuf => <<"EOR",
