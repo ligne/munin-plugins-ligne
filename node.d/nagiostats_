@@ -81,7 +81,7 @@ uptime.label Uptime (s)
 uptime.info The time since Nagios was last restarted
 EOC
 
-    # FIXME: not terribly useful.
+    # FIXME: not terribly useful.  just check that it's fresh?
     statusfileage => <<"EOC",
 graph_title Age of status file
 statusfileage.label Age (s)
@@ -282,7 +282,7 @@ open(my $RESULTS, '-|', $nagiostat, '-m', '-d', $variables)
 my %values;
 chomp(@values{@variables} = <$RESULTS>);
 
-close $RESULTS or die $!;
+close $RESULTS or die "Error running '$nagiostat': $!\n";
 
 my %result = (
     uptime => <<"EOR",
