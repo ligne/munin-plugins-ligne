@@ -1,0 +1,5 @@
+*.bak
+*~
+cover_db/
+nytprof*
+*.swp
