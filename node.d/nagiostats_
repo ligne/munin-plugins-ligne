@@ -276,12 +276,13 @@ if ($ARGV[0] and $ARGV[0] eq 'config') {
     exit 0 unless $ENV{MUNIN_CAP_DIRTYCONFIG};
 }
 
-
-open(my $RESULTS, "$nagiostat -m -d $variables |")
+open(my $RESULTS, '-|', $nagiostat, '-m', '-d', $variables)
     or die "Failed to run '$nagiostat': $!\n";
 
 my %values;
 chomp(@values{@variables} = <$RESULTS>);
+
+close $RESULTS or die $!;
 
 my %result = (
     uptime => <<"EOR",
