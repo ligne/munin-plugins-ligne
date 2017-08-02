@@ -54,7 +54,17 @@ GPLv2 or (at your option) any later version.
 use strict;
 use warnings;
 
-my $nagiostat = $ENV{nagiostats} || 'nagiostats';
+my $nagiostat;
+if ($ENV{nagiostats}) {
+    $nagiostat = $ENV{nagiostats};
+} else {
+    if (0 == system('which nagiostats >/dev/null 2>&1')) {
+        $nagiostat = 'nagiostats';
+    }
+    elsif (0 == system('which nagios3stats >/dev/null 2>&1')) {
+        $nagiostat = 'nagios3stats';
+    }
+}
 
 my @variables = qw(
     PROGRUNTIMETT STATUSFILEAGETT TOTCMDBUF USEDCMDBUF NUMSERVICES NUMHOSTS
@@ -249,7 +259,8 @@ EOC
 # NUMPSVSVCCHECKS5M    number of passive service checks occuring in last 5 minutes.
 
 if ($ARGV[0] and $ARGV[0] eq 'autoconf') {
-    system("$nagiostat -h 1>/dev/null 2>/dev/null") == 0
+    my $helpexit = system("$nagiostat -h 1>/dev/null 2>/dev/null");
+    ( $helpexit == 0 || $helpexit == 65024 )   # 'nagios3stats -h' returns 65024
         ? print "yes\n"
         : print "no ($nagiostat not executable)\n";
     exit 0;
